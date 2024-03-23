@@ -100,4 +100,20 @@ const render = (el, container) => {
   container.append(dom)
 }
 const App = createElement('div', {id: 'div'}, 'app', 'hhh')
-render(App, document.querySelector('#root'))
+// render(App, document.querySelector('#root'))
+
+
+
+// 改写成 react 的 api
+// ReactDom.createRoot(document.getElementById('#root').render(<App />))
+
+const ReactDom = {
+createRoot(container) {
+  return {
+    render(app) {
+      return render(app, container)
+    }
+  }
+}
+}
+ReactDom.createRoot(document.getElementById('#root').render(App))
