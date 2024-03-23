@@ -38,7 +38,38 @@
 // dom.append(text)
 
 
-// 3. 通过函数创建节点
+// 3. 动态创建 vdom
+// const createTextNode = (text) => {
+//   return {
+//     type: 'TEXT_ELEMENT',
+//     props: {
+//       nodeValue: text,
+//     },
+//       children: []
+//   }
+// }
+
+// const createElement = (type, props, ...children) => {
+//   return {
+//     type,
+//     props,
+//     children
+//   }
+// }
+
+// const App = createElement('div', {id: 'div'}, createTextNode('app'))
+// console.log(App, 'app')
+// const dom = document.createElement(App.type)
+// dom.id = App.props.id
+// document.querySelector('#root').append(dom)
+
+// const text = document.createTextNode('')
+// text.nodeValue = App.children[0].props.nodeValue
+// dom.append(text)
+
+
+
+// 动态创建节点
 const createTextNode = (text) => {
   return {
     type: 'TEXT_ELEMENT',
@@ -53,18 +84,20 @@ const createElement = (type, props, ...children) => {
   return {
     type,
     props,
-    children
+    children: children.map(child => typeof child === 'string' ? createTextNode(child) : child)
   }
 }
-
-const App = createElement('div', {id: 'div'}, createTextNode('app'))
-console.log(App, 'app')
-const dom = document.createElement(App.type)
-dom.id = App.props.id
-document.querySelector('#root').append(dom)
-
-const text = document.createTextNode('')
-text.nodeValue = App.children[0].props.nodeValue
-dom.append(text)
-
-
+const render = (el, container) => {
+  const dom = el.type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(el.type)
+  Object.keys(el.props).forEach(attr => {
+    dom[attr] = el.props[attr]
+  })
+  if (el.children && el.children.length) {
+    console.log(el.children, 'vvvvvv')
+    el.children.forEach((child) => render(child, dom))
+  }
+  console.log(container, 'c')
+  container.append(dom)
+}
+const App = createElement('div', {id: 'div'}, 'app', 'hhh')
+render(App, document.querySelector('#root'))
