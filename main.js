@@ -70,36 +70,36 @@
 
 
 // 动态创建节点
-const createTextNode = (text) => {
-  return {
-    type: 'TEXT_ELEMENT',
-    props: {
-      nodeValue: text,
-    },
-      children: []
-  }
-}
+// const createTextNode = (text) => {
+//   return {
+//     type: 'TEXT_ELEMENT',
+//     props: {
+//       nodeValue: text,
+//     },
+//       children: []
+//   }
+// }
 
-const createElement = (type, props, ...children) => {
-  return {
-    type,
-    props,
-    children: children.map(child => typeof child === 'string' ? createTextNode(child) : child)
-  }
-}
-const render = (el, container) => {
-  const dom = el.type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(el.type)
-  Object.keys(el.props).forEach(attr => {
-    dom[attr] = el.props[attr]
-  })
-  if (el.children && el.children.length) {
-    console.log(el.children, 'vvvvvv')
-    el.children.forEach((child) => render(child, dom))
-  }
-  console.log(container, 'c')
-  container.append(dom)
-}
-const App = createElement('div', {id: 'div'}, 'app', 'hhh')
+// const createElement = (type, props, ...children) => {
+//   return {
+//     type,
+//     props,
+//     children: children.map(child => typeof child === 'string' ? createTextNode(child) : child)
+//   }
+// }
+// const render = (el, container) => {
+//   const dom = el.type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(el.type)
+//   Object.keys(el.props).forEach(attr => {
+//     dom[attr] = el.props[attr]
+//   })
+//   if (el.children && el.children.length) {
+//     console.log(el.children, 'vvvvvv')
+//     el.children.forEach((child) => render(child, dom))
+//   }
+//   console.log(container, 'c')
+//   container.append(dom)
+// }
+// const App = createElement('div', {id: 'div'}, 'app', 'hhh')
 // render(App, document.querySelector('#root'))
 
 
@@ -107,13 +107,17 @@ const App = createElement('div', {id: 'div'}, 'app', 'hhh')
 // 改写成 react 的 api
 // ReactDom.createRoot(document.getElementById('#root').render(<App />))
 
-const ReactDom = {
-createRoot(container) {
-  return {
-    render(app) {
-      return render(app, container)
-    }
-  }
-}
-}
-ReactDom.createRoot(document.getElementById('#root').render(App))
+// const ReactDom = {
+// createRoot(container) {
+//   return {
+//     render(app) {
+//       return render(app, container)
+//     }
+//   }
+// }
+// }
+import ReactDom from './core/ReactDom.js'
+import React from './core/React.js'
+
+const App = React.createElement('div', {id: 'div'}, 'app', 'hhh')
+ReactDom.createRoot(document.querySelector('#root')).render(App)
