@@ -26,6 +26,7 @@ const render = (el, container) => {
     }
   }
 }
+
 // 下一个任务（节点）
 let nextWorkOfUnit = null
 function workLoop(deadline) {
@@ -40,52 +41,58 @@ function workLoop(deadline) {
   }
   requestIdleCallback(workLoop)
 }
-const performWorkOfUnit = (work) => {
-  if (!work.dom) {
-
-  // 1. 创建dom
-
-  const dom =(work.dom =  work.type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(work.type))
-  // 2. 把 dom 添加到父容器内
-  work.parent.dom.append(dom)
-  // 3. 设置 dom 的 props
-
-  Object.keys(work.props).forEach(attr => {
+const createDom = (type) => {
+  return type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(type)
+}
+const updateProps = (dom, props) => {
+  Object.keys(props).forEach(attr => {
     if (attr !== 'children') {
-      dom[attr] = work.props[attr]
+      dom[attr] = props[attr]
     }
   })
-  }
+}
+const initChildren = (fiber) => {
   // 4. 建立关系 child sibling parent
-  const children = work.props.children
+  const children = fiber.props.children
   let prevChild = null
   children.forEach((child, index) => {
-    const newWork = {
+    const newFiber = {
       type: child.type,
       props: child.props,
       child: null, // child 和 sibling 初始化我们不知道
       sibling: null,
-      parent: work,
+      parent: fiber,
       dom: null
     }
     if (index === 0) {
-      work.child = newWork
+      fiber.child = newFiber
     } else {
       // 如果不是第一个孩子就需要绑定到sibling，也就是上一个孩子的sibling 上，所以我们需要知道上一个孩子
-      prevChild.sibling = newWork
+      prevChild.sibling = newFiber
     }
     // 考虑到我们还需要设置 parent.sibling，因为我们是从上往下获取的，所以work肯定是顶层也就是 parent，我们只能给 child 设置，
     // 但是如果直接在child 上加就会破坏原有结构,所以我们单独维护一个newWork 对象，
-    prevChild = newWork
+    prevChild = newFiber
   })
+}
+const performWorkOfUnit = (fiber) => {
+  if (!fiber.dom) {
+    // 1. 创建dom
+    const dom =(fiber.dom =  createDom(fiber.type))
+    // 2. 把 dom 添加到父容器内
+    fiber.parent.dom.append(dom)
+    // 3. 设置 dom 的 props
+    updateProps(dom, fiber.props)
+  }
+  initChildren(fiber)
   // 5. 返回下一个节点
-  if (work.child) {
-    return work.child
+  if (fiber.child) {
+    return fiber.child
   }
-  if (work.sibling) {
-    return work.sibling
+  if (fiber.sibling) {
+    return fiber.sibling
   }
-  return work.parent.sibling
+  return fiber.parent.sibling
 
 }
 requestIdleCallback(workLoop)
