@@ -18,28 +18,42 @@ const createElement = (type, props, ...children) => {
   }
 }
 const render = (el, container) => {
-  console.log(1)
-  nextWorkOfUnit = {
+  root = (nextWorkOfUnit = {
     dom: container,
     props: {
       children: [el]
     }
-  }
+  })
 }
 
+let root = null
 // 下一个任务（节点）
 let nextWorkOfUnit = null
 function workLoop(deadline) {
- console.log(3) 
   let shouldYield = false
   while(!shouldYield && nextWorkOfUnit) {
-    console.log(2)
     // 返回下一个节点
     nextWorkOfUnit = performWorkOfUnit(nextWorkOfUnit)
     // 这里为什么是小于 1
     shouldYield = deadline.timeRemaining() < 1
   }
+  // 链表结束
+  if (!nextWorkOfUnit && root) {
+    commitRoot()
+  }
   requestIdleCallback(workLoop)
+}
+const commitRoot = () => {
+  // 这里为啥不是root.props.children
+  commitWork(root.child)
+  root = null
+}
+const commitWork = (fiber) => {
+  // 如果在执行递归的时候执行了一半没时间了，不是依然还是只渲染了一部分节点吗
+  if (!fiber) return
+  fiber.parent.dom.append(fiber.dom)
+  commitWork(fiber.child)
+  commitWork(fiber.sibling)
 }
 const createDom = (type) => {
   return type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(type)
@@ -79,8 +93,6 @@ const performWorkOfUnit = (fiber) => {
   if (!fiber.dom) {
     // 1. 创建dom
     const dom =(fiber.dom =  createDom(fiber.type))
-    // 2. 把 dom 添加到父容器内
-    fiber.parent.dom.append(dom)
     // 3. 设置 dom 的 props
     updateProps(dom, fiber.props)
   }
