@@ -51,11 +51,18 @@ const commitRoot = () => {
 const commitWork = (fiber) => {
   // 如果在执行递归的时候执行了一半没时间了，不是依然还是只渲染了一部分节点吗
   if (!fiber) return
-  fiber.parent.dom.append(fiber.dom)
+  let filberParent = fiber.parent
+  while (!filberParent.dom) {
+    filberParent = filberParent.parent
+  }
+  if (fiber.dom) {
+    filberParent.dom.append(fiber.dom)
+  }
   commitWork(fiber.child)
   commitWork(fiber.sibling)
 }
 const createDom = (type) => {
+  console.log(type, 'yyyyy')
   return type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(type)
 }
 const updateProps = (dom, props) => {
@@ -65,9 +72,7 @@ const updateProps = (dom, props) => {
     }
   })
 }
-const initChildren = (fiber) => {
-  // 4. 建立关系 child sibling parent
-  const children = fiber.props.children
+const initChildren = (fiber, children) => {
   let prevChild = null
   children.forEach((child, index) => {
     const newFiber = {
@@ -90,13 +95,17 @@ const initChildren = (fiber) => {
   })
 }
 const performWorkOfUnit = (fiber) => {
-  if (!fiber.dom) {
-    // 1. 创建dom
-    const dom =(fiber.dom =  createDom(fiber.type))
-    // 3. 设置 dom 的 props
-    updateProps(dom, fiber.props)
+  const isFunctionComonent = typeof fiber.type === 'function'
+  if (!isFunctionComonent) {
+    if (!fiber.dom) {
+      // 1. 创建dom
+      const dom =(fiber.dom =  createDom(fiber.type))
+      // 3. 设置 dom 的 props
+      updateProps(dom, fiber.props)
+    }
   }
-  initChildren(fiber)
+  const children = isFunctionComonent ? [fiber.type()] : fiber.props.children
+  initChildren(fiber, children)
   // 5. 返回下一个节点
   if (fiber.child) {
     return fiber.child

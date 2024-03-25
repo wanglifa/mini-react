@@ -1,4 +1,12 @@
 import React from './core/React.js'
-
-const App = React.createElement('div', {id: 'div'}, 'app', 'hhh')
+function Counter() {
+  return <div>count</div>
+}
+function CounterContainer () {
+  return <Counter></Counter>
+}
+const App = <div>
+  hi-mini-react
+  <CounterContainer></CounterContainer>
+</div>
 export default App
