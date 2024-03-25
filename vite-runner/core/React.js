@@ -93,18 +93,27 @@ const initChildren = (fiber, children) => {
     prevChild = newFiber
   })
 }
-const performWorkOfUnit = (fiber) => {
-  const isFunctionComonent = typeof fiber.type === 'function'
-  if (!isFunctionComonent) {
+const updateFunctionComponent = (fiber) => {
+  const children = [fiber.type(fiber.props)]
+  initChildren(fiber, children)
+}
+const updateHostComponent = (fiber) => {
     if (!fiber.dom) {
       // 1. 创建dom
       const dom =(fiber.dom =  createDom(fiber.type))
       // 3. 设置 dom 的 props
       updateProps(dom, fiber.props)
     }
-  }
-  const children = isFunctionComonent ? [fiber.type(fiber.props)] : fiber.props.children
+  const children = fiber.props.children
   initChildren(fiber, children)
+}
+const performWorkOfUnit = (fiber) => {
+  const isFunctionComonent = typeof fiber.type === 'function'
+  if (!isFunctionComonent) {
+    updateHostComponent(fiber)    
+  } else {
+    updateFunctionComponent(fiber)
+  }
   // 5. 返回下一个节点
   if (fiber.child) {
     return fiber.child
