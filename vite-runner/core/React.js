@@ -13,7 +13,7 @@ const createElement = (type, props, ...children) => {
     type,
     props: {
       ...props,
-      children: children.map(child => typeof child === 'string' ? createTextNode(child) : child)
+      children: children.map(child => ['string', 'number'].includes(typeof child) ? createTextNode(child) : child)
     }
   }
 }
@@ -62,7 +62,6 @@ const commitWork = (fiber) => {
   commitWork(fiber.sibling)
 }
 const createDom = (type) => {
-  console.log(type, 'yyyyy')
   return type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(type)
 }
 const updateProps = (dom, props) => {
@@ -104,16 +103,19 @@ const performWorkOfUnit = (fiber) => {
       updateProps(dom, fiber.props)
     }
   }
-  const children = isFunctionComonent ? [fiber.type()] : fiber.props.children
+  const children = isFunctionComonent ? [fiber.type(fiber.props)] : fiber.props.children
   initChildren(fiber, children)
   // 5. 返回下一个节点
   if (fiber.child) {
     return fiber.child
   }
-  if (fiber.sibling) {
-    return fiber.sibling
+  let nextFilber = fiber
+  while(nextFilber) {
+    if (nextFilber.sibling) {
+      return nextFilber.sibling
+    }
+    nextFilber = nextFilber.parent
   }
-  return fiber.parent.sibling
 
 }
 requestIdleCallback(workLoop)
