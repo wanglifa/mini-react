@@ -1,12 +1,24 @@
 import React from './core/React.js'
+let count = 10
 function Counter({num}) {
-  const handleClick = () => {
-    console.log('hhh')
+  function handleClick() {
+    console.log('clisk')
+    count++
+    React.update()
   }
-  return <div onClick={handleClick}>count: {num}</div>
+  return (
+    <div>
+      count: {num}
+      <button onClick={handleClick}>click</button>
+    </div>
+  )
 }
-const App = <div>
+function App() {
+  return (
+    <div>
   hi-mini-react
-  <Counter num={1}></Counter>
-</div>
+  <Counter num={10}></Counter>
+    </div>
+  )
+}
 export default App
