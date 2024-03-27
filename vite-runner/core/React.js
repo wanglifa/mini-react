@@ -66,8 +66,14 @@ const createDom = (type) => {
 }
 const updateProps = (dom, props) => {
   Object.keys(props).forEach(attr => {
-    if (attr !== 'children') {
-      dom[attr] = props[attr]
+    const isEvent = attr.startsWith('on')
+    if (isEvent) {
+      const eventType = attr.slice(2).toLocaleLowerCase()
+      dom.addEventListener(eventType, props[attr])
+    } else {
+      if (attr !== 'children') {
+        dom[attr] = props[attr]
+      }
     }
   })
 }
