@@ -124,7 +124,6 @@ const initChildren = (fiber, children) => {
     const isSameType = oldFiber && oldFiber.type === child.type
     let newFiber
     if (isSameType) {
-      console.log(22222222333)
       // update
       newFiber = {
         type: child.type,
