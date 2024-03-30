@@ -33,6 +33,8 @@ let currentRoot = null
 let nextWorkOfUnit = null
 let deletions = []
 let wipFiber = null
+let stateHooks
+let stateHooksIndex
 function workLoop(deadline) {
   let shouldYield = false
   while(!shouldYield && nextWorkOfUnit) {
@@ -176,6 +178,8 @@ const initChildren = (fiber, children) => {
   }
 }
 const updateFunctionComponent = (fiber) => {
+  stateHooks = []
+  stateHooksIndex = 0
   wipFiber = fiber
   const children = [fiber.type(fiber.props)]
   initChildren(fiber, children)
@@ -222,9 +226,31 @@ const update = () => {
     nextWorkOfUnit = wipRoot
   }
 }
+const useState = (inital) => {
+  let currentFiber = wipFiber
+  const oldHook = currentFiber.alternate?.stateHooks[stateHooksIndex]
+  const stateHook = {
+    state: oldHook ? oldHook.state : inital
+  }
+
+  stateHooks.push(stateHook)
+  currentFiber.stateHooks = stateHooks
+
+  const setState = (action) => {
+    stateHook.state = action(stateHook.state)
+    wipRoot = {
+      ...currentFiber,
+      alternate: currentFiber
+    }
+    nextWorkOfUnit = wipRoot
+  }
+  stateHooksIndex++
+  return [stateHook.state, setState]
+}
 const React = {
   render,
   createElement,
-  update
+  update,
+  useState
 }
 export default React
