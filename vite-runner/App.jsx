@@ -5,6 +5,7 @@ function Counter() {
     <div>
       foo
       <div>child</div>
+      <div>child2</div>
     </div>
   )
   const bar = <p>bar</p>

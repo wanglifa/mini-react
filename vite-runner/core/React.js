@@ -132,7 +132,6 @@ const initChildren = (fiber, children) => {
   let prevChild = null
   children.forEach((child, index) => {
     // 开始对比
-    // 为什么从child才开始对比，而不是从根节点就开始对比
     const isSameType = oldFiber && oldFiber.type === child.type
     let newFiber
     if (isSameType) {
@@ -177,6 +176,10 @@ const initChildren = (fiber, children) => {
     // 但是如果直接在child 上加就会破坏原有结构,所以我们单独维护一个newWork 对象，
     prevChild = newFiber
   })
+  while (oldFiber) {
+    deletions.push(oldFiber)
+    oldFiber = oldFiber.sibling
+  }
 }
 const updateFunctionComponent = (fiber) => {
   const children = [fiber.type(fiber.props)]
