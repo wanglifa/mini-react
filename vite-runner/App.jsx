@@ -5,7 +5,7 @@ const Foo = () => {
   const [age, setAge] = React.useState(1)
   const handleClick = () => {
     setCount((count) => count + 1)
-    setAge((age) => age + 2)
+    setAge(4)
   }
   return (
     <div>

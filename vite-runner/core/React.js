@@ -239,7 +239,7 @@ const useState = (inital) => {
   currentFiber.stateHooks = stateHooks
 
   const setState = (action) => {
-    stateHook.queue.push(action)
+    stateHook.queue.push(typeof action === 'function' ? action : () => action)
     wipRoot = {
       ...currentFiber,
       alternate: currentFiber
