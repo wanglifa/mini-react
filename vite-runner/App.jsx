@@ -11,10 +11,13 @@ const Foo = () => {
   console.log('foo render')
   const [count, setCount] = React.useState(0)
   const handleClick = () => {
-    setCount(0)
+    setCount((count) => count + 1)
   }
   React.useEffect(() => {
     console.log(11111)
+  }, [])
+  React.useEffect(() => {
+    console.log(2222)
   }, [count])
   return (
     <div>

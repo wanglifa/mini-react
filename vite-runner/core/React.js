@@ -35,6 +35,7 @@ let deletions = []
 let wipFiber = null
 let stateHooks
 let stateHooksIndex
+let effectHooks
 function workLoop(deadline) {
   let shouldYield = false
   while(!shouldYield && nextWorkOfUnit) {
@@ -49,25 +50,29 @@ function workLoop(deadline) {
   // 链表结束
   if (!nextWorkOfUnit && wipRoot) {
     commitRoot()
-    commitEffectHook()
+    commitEffectHooks()
   }
   requestIdleCallback(workLoop)
 }
 
-const commitEffectHook = () => {
+const commitEffectHooks = () => {
   const run = (fiber) => {
     if (!fiber) return
     if (!fiber.alternate) {
       // init
-      fiber.effectHook?.callback()
+      fiber.effectHooks?.forEach(hook => hook?.callback())
     } else {
       // update
-      const oldEffect = fiber.alternate?.effectHook
-      const needUpdate = fiber.effectHook?.deps.some((dep, index) => {
-        return dep !== oldEffect.deps[index]
-      })
+      fiber.effectHooks?.forEach((newHook, index) => {
+        if (newHook.deps.length > 0) {
+          const oldEffect = fiber.alternate?.effectHooks[index]
+          const needUpdate = newHook?.deps.some((dep, i) => {
+            return dep !== oldEffect.deps[i]
+          })
 
-      needUpdate && fiber.effectHook?.callback()
+          needUpdate && newHook?.callback()
+        }
+      })
     }
     // 这里为啥要递归child 和 sibling
     run(fiber.child)
@@ -203,6 +208,7 @@ const initChildren = (fiber, children) => {
 }
 const updateFunctionComponent = (fiber) => {
   stateHooks = []
+  effectHooks = []
   stateHooksIndex = 0
   wipFiber = fiber
   const children = [fiber.type(fiber.props)]
@@ -282,7 +288,8 @@ const useEffect = (callback, deps) => {
     callback,
     deps
   }
-  wipFiber.effectHook = effectHook
+  effectHooks.push(effectHook)
+  wipFiber.effectHooks = effectHooks
 }
 const React = {
   render,
