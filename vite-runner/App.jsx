@@ -15,9 +15,15 @@ const Foo = () => {
   }
   React.useEffect(() => {
     console.log(11111)
+    return () => {
+      console.log('clearnup 0')
+    }
   }, [])
   React.useEffect(() => {
     console.log(2222)
+    return () => {
+      console.log('cleanup 1')
+    }
   }, [count])
   return (
     <div>

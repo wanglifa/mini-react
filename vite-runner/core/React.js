@@ -60,7 +60,7 @@ const commitEffectHooks = () => {
     if (!fiber) return
     if (!fiber.alternate) {
       // init
-      fiber.effectHooks?.forEach(hook => hook?.callback())
+      fiber.effectHooks?.forEach(hook => (hook.cleanup = hook?.callback()))
     } else {
       // update
       fiber.effectHooks?.forEach((newHook, index) => {
@@ -70,15 +70,30 @@ const commitEffectHooks = () => {
             return dep !== oldEffect.deps[i]
           })
 
-          needUpdate && newHook?.callback()
+          needUpdate && (newHook.cleanup = newHook?.callback())
         }
       })
     }
     // 这里为啥要递归child 和 sibling
-    run(fiber.child)
-    run(fiber.sibling)
+    // run(fiber.child)
+    // run(fiber.sibling)
+  }
+  // run(wipRoot)
+  // 在调用所有的 effect 之前调用 cleanup
+  const runCleanup = (fiber) => {
+    if (!fiber) return
+    // 取上一次的 effectHooks
+    fiber.alternate?.effectHooks?.forEach(hook => {
+      // [] 不应该执行
+      if (hook.deps.length > 0) {
+        hook.cleanup?.()
+      }
+    })
+    runCleanup(fiber.child)
+    runCleanup(fiber.sibling)
   }
 
+  runCleanup(wipFiber)
   run(wipFiber)
 }
 
@@ -286,7 +301,8 @@ const useState = (inital) => {
 const useEffect = (callback, deps) => {
   const effectHook = {
     callback,
-    deps
+    deps,
+    cleanup: undefined
   }
   effectHooks.push(effectHook)
   wipFiber.effectHooks = effectHooks
