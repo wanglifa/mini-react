@@ -18,7 +18,7 @@ const createElement = (type, props, ...children) => {
   }
 }
 const render = (el, container) => {
-  root = (nextWorkOfUnit = {
+  wipRoot = (nextWorkOfUnit = {
     dom: container,
     props: {
       children: [el]
@@ -26,10 +26,11 @@ const render = (el, container) => {
   })
 }
 
-let root = null
+let wipRoot = null
 let currentRoot = null
 // 下一个任务（节点）
 let nextWorkOfUnit = null
+let deletions = []
 function workLoop(deadline) {
   let shouldYield = false
   while(!shouldYield && nextWorkOfUnit) {
@@ -39,18 +40,29 @@ function workLoop(deadline) {
     shouldYield = deadline.timeRemaining() < 1
   }
   // 链表结束
-  if (!nextWorkOfUnit && root) {
+  if (!nextWorkOfUnit && wipRoot) {
     commitRoot()
   }
   requestIdleCallback(workLoop)
 }
 
+const commitDeletion = (fiber) => {
+  if (fiber.dom) {
+    let fiberParent = fiber.parent
+    while(!fiberParent.dom) {
+      fiberParent = fiberParent.parent
+    }
+    fiberParent.dom.removeChild(fiber.dom)
+  } else {
+    commitDeletion(fiber.child) 
+  }
+}
 const commitRoot = () => {
-  // 这里为啥不是root.props.children
-  commitWork(root.child)
-  currentRoot = root
-  console.log(currentRoot, 'cccccccc')
-  root = null
+  deletions.forEach(commitDeletion)
+  commitWork(wipRoot.child)
+  currentRoot = wipRoot
+  wipRoot = null
+  deletions = []
 }
 const commitWork = (fiber) => {
   // 如果在执行递归的时候执行了一半没时间了，不是依然还是只渲染了一部分节点吗
@@ -137,7 +149,6 @@ const initChildren = (fiber, children) => {
         effectTag: 'update'
       }
     } else {
-      // 这里为什么type不一样就是添加也可能是删除不是吗？
       // 添加
       newFiber = {
         type: child.type,
@@ -147,6 +158,9 @@ const initChildren = (fiber, children) => {
         parent: fiber,
         dom: null,
         effectTag: 'placement'
+      }
+      if (oldFiber) {
+        deletions.push(oldFiber)
       }
     }
     if (oldFiber) {
@@ -208,7 +222,7 @@ const update = () => {
     props: currentRoot.props,
     alternate: currentRoot
   }
-  root = nextWorkOfUnit
+  wipRoot = nextWorkOfUnit
 }
 const React = {
   render,
