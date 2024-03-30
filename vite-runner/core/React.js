@@ -50,7 +50,6 @@ function workLoop(deadline) {
   // 链表结束
   if (!nextWorkOfUnit && wipRoot) {
     commitRoot()
-    commitEffectHooks()
   }
   requestIdleCallback(workLoop)
 }
@@ -111,6 +110,7 @@ const commitDeletion = (fiber) => {
 const commitRoot = () => {
   deletions.forEach(commitDeletion)
   commitWork(wipRoot.child)
+  commitEffectHooks()
   currentRoot = wipRoot
   wipRoot = null
   deletions = []
