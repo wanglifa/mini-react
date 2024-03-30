@@ -49,8 +49,32 @@ function workLoop(deadline) {
   // 链表结束
   if (!nextWorkOfUnit && wipRoot) {
     commitRoot()
+    commitEffectHook()
   }
   requestIdleCallback(workLoop)
+}
+
+const commitEffectHook = () => {
+  const run = (fiber) => {
+    if (!fiber) return
+    if (!fiber.alternate) {
+      // init
+      fiber.effectHook?.callback()
+    } else {
+      // update
+      const oldEffect = fiber.alternate?.effectHook
+      const needUpdate = fiber.effectHook?.deps.some((dep, index) => {
+        return dep !== oldEffect.deps[index]
+      })
+
+      needUpdate && fiber.effectHook?.callback()
+    }
+    // 这里为啥要递归child 和 sibling
+    run(fiber.child)
+    run(fiber.sibling)
+  }
+
+  run(wipFiber)
 }
 
 const commitDeletion = (fiber) => {
@@ -253,10 +277,18 @@ const useState = (inital) => {
   stateHooksIndex++
   return [stateHook.state, setState]
 }
+const useEffect = (callback, deps) => {
+  const effectHook = {
+    callback,
+    deps
+  }
+  wipFiber.effectHook = effectHook
+}
 const React = {
   render,
   createElement,
   update,
-  useState
+  useState,
+  useEffect
 }
 export default React
