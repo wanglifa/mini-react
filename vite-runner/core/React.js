@@ -51,6 +51,9 @@ function workLoop(deadline) {
   if (!nextWorkOfUnit && wipRoot) {
     commitRoot()
   }
+  if (nextWorkOfUnit && !wipRoot) {
+    wipRoot = currentRoot
+  }
   requestIdleCallback(workLoop)
 }
 
@@ -102,6 +105,7 @@ const commitDeletion = (fiber) => {
     while(!fiberParent.dom) {
       fiberParent = fiberParent.parent
     }
+    console.log(fiberParent.dom, 'ddddddd')
     fiberParent.dom.removeChild(fiber.dom)
   } else {
     commitDeletion(fiber.child) 
@@ -122,7 +126,7 @@ const commitWork = (fiber) => {
   while (!filberParent.dom) {
     filberParent = filberParent.parent
   }
-  if (fiber.effectTag === 'update') {
+  if (fiber.effectTag === 'update' && fiber.dom) {
     updateProps(fiber.dom, fiber.props, fiber.alternate?.props)
   } else if (fiber.effectTag === 'placement'){
     if (fiber.dom) {
@@ -157,7 +161,11 @@ const updateProps = (dom, nextProps, prevProps) => {
           dom.removeEventListener(eventType, prevProps[key])
           dom.addEventListener(eventType, nextProps[key])
         } else {
-          dom[key] = nextProps[key]
+          if (key === 'style') {
+            Object.assign(dom[key], nextProps[key])
+          } else {
+            dom[key] = nextProps[key]
+          }
         }
       }
     }
@@ -166,56 +174,64 @@ const updateProps = (dom, nextProps, prevProps) => {
 const initChildren = (fiber, children) => {
   let oldFiber = fiber.alternate?.child
   let prevChild = null
-  children.forEach((child, index) => {
-    // 开始对比
-    const isSameType = oldFiber && oldFiber.type === child.type
-    let newFiber
-    if (isSameType) {
-      // update
-      newFiber = {
-        type: child.type,
-        props: child.props,
-        child: null, // child 和 sibling 初始化我们不知道
-        sibling: null,
-        parent: fiber,
-        // 更新不会新创建 dom
-        dom: oldFiber.dom,
-        alternate: oldFiber,
-        effectTag: 'update'
-      }
-    } else {
-      // 添加
-      if (child) {
+  console.log(children, 'cccccc')
+  // [{type: 'div'}] / [[{type: 'div'}, {type: 'div'}]]
+  const newChildren = Array.isArray(children[0]) ? children.flat() : children
+  newChildren.forEach((child, index) => {
+    // if (child instanceof Array) {
+    //   initChildren(fiber, child)
+    // } else {
+      const isSameType = oldFiber && oldFiber.type === child.type
+      let newFiber
+      if (isSameType) {
+        // update
         newFiber = {
           type: child.type,
           props: child.props,
           child: null, // child 和 sibling 初始化我们不知道
           sibling: null,
           parent: fiber,
-          dom: null,
-          effectTag: 'placement'
+          // 更新不会新创建 dom
+          dom: oldFiber.dom,
+          alternate: oldFiber,
+          effectTag: 'update'
+        }
+      } else {
+        // 添加
+        if (child) {
+          newFiber = {
+            type: child.type,
+            props: child.props,
+            child: null, // child 和 sibling 初始化我们不知道
+            sibling: null,
+            parent: fiber,
+            dom: null,
+            effectTag: 'placement'
+          }
+        }
+        if (oldFiber) {
+          deletions.push(oldFiber)
         }
       }
       if (oldFiber) {
-        deletions.push(oldFiber)
+        // 多个子级
+        oldFiber = oldFiber.sibling
+      }
+      if (index === 0) {
+        fiber.child = newFiber
+      } else {
+        // 如果不是第一个孩子就需要绑定到sibling，也就是上一个孩子的sibling 上，所以我们需要知道上一个孩子
+        prevChild.sibling = newFiber
+      }
+      // 考虑到我们还需要设置 parent.sibling，因为我们是从上往下获取的，所以work肯定是顶层也就是 parent，我们只能给 child 设置，
+      // 但是如果直接在child 上加就会破坏原有结构,所以我们单独维护一个newWork 对象，
+      if (newFiber) {
+        prevChild = newFiber
       }
     }
-    if (oldFiber) {
-      // 多个子级
-      oldFiber = oldFiber.sibling
-    }
-    if (index === 0) {
-      fiber.child = newFiber
-    } else {
-      // 如果不是第一个孩子就需要绑定到sibling，也就是上一个孩子的sibling 上，所以我们需要知道上一个孩子
-      prevChild.sibling = newFiber
-    }
-    // 考虑到我们还需要设置 parent.sibling，因为我们是从上往下获取的，所以work肯定是顶层也就是 parent，我们只能给 child 设置，
-    // 但是如果直接在child 上加就会破坏原有结构,所以我们单独维护一个newWork 对象，
-    if (newFiber) {
-      prevChild = newFiber
-    }
-  })
+    // }
+    // 开始对比
+  )
   while (oldFiber) {
     deletions.push(oldFiber)
     oldFiber = oldFiber.sibling
