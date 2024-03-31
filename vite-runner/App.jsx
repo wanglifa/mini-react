@@ -1,7 +1,7 @@
 import React from './core/React.js'
 const Bar = () => {
   React.useEffect(() => {
-    console.log(222)
+    console.log('bar')
   }, [])
   return (
     <div>bar</div>
@@ -39,6 +39,7 @@ function App() {
   return (
     <div>
       <Foo></Foo>
+      <Bar></Bar>
     </div>
   )
 }

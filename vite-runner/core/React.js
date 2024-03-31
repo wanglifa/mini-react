@@ -74,8 +74,8 @@ const commitEffectHooks = () => {
       })
     }
     // 这里为啥要递归child 和 sibling
-    // run(fiber.child)
-    // run(fiber.sibling)
+    run(fiber.child)
+    run(fiber.sibling)
   }
   // run(wipRoot)
   // 在调用所有的 effect 之前调用 cleanup
@@ -92,8 +92,8 @@ const commitEffectHooks = () => {
     runCleanup(fiber.sibling)
   }
 
-  runCleanup(wipFiber)
-  run(wipFiber)
+  runCleanup(wipRoot)
+  run(wipRoot)
 }
 
 const commitDeletion = (fiber) => {
